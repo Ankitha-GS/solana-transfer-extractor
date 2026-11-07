@@ -4,7 +4,7 @@
 # Requirements: Rust (rustup), substreams CLI, jq, and an API key from https://thegraph.market
 #   export SUBSTREAMS_API_KEY="your-key-here"
 set -e
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")"
 
 if [ -z "$SUBSTREAMS_API_KEY" ]; then
   echo "ERROR: set your key first:  export SUBSTREAMS_API_KEY=\"your-key\"" >&2
