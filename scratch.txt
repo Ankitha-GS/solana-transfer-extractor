@@ -1,0 +1,27 @@
+# Scratch Pad
+
+## Understanding the task
+- Substreams = streaming engine that runs a small WASM program (written in Rust) over each blockchain block.
+- Input: raw Solana block (sf.solana.type.v1.Block). Output: my own protobuf message.
+- SPKG = packaged manifest + protobuf schema + compiled WASM, made with `substreams pack`.
+
+## Decisions
+- "Transfer" = System Program Transfer/TransferWithSeed (SOL) + SPL Token/Token-2022 Transfer/TransferChecked.
+- Walk inner instructions too: most token transfers on Solana happen inside DEX/program calls (CPI).
+- Only successful transactions (failed ones moved no funds).
+- Token accounts -> owner wallets via pre/post token balances (task asks for wallet addresses).
+- Used substreams 0.6.4 + substreams-solana 0.14.3 (prost-based, well documented).
+  Wrote prost structs by hand so no protoc/buf install is needed.
+- Protobuf JSON prints uint64 as string -> jq post-processing for exact format.
+
+## Instruction layouts used
+- System: data[0..4]=u32 LE id (2=Transfer, 11=TransferWithSeed), data[4..12]=u64 lamports
+  accounts Transfer=[from,to], TransferWithSeed=[from,base,to]
+- SPL Token: data[0]=u8 id (3=Transfer, 12=TransferChecked), data[1..9]=u64 amount
+  accounts Transfer=[src,dst,authority], TransferChecked=[src,mint,dst,authority]
+
+## Verification
+- Without API key: `substreams run` reaches mainnet.sol.streamingfast.io and fails only on auth -> package is valid.
+- Re-implemented same logic in Python on public RPC getBlock data for the 6 slots:
+  151:542, 152:581, 153:961, 154:596, 155:474, 156:820 transfers (total ~3974).
+- Example address from task (Eq1c3u...) not present in these blocks -> it is a format example.
